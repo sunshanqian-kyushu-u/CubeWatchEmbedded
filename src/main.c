@@ -1,5 +1,5 @@
 #include "main.h"
-#include "ds3231_driver.h"
+#include "common.h"
 
 #include <zephyr/kernel.h>
 
@@ -37,6 +37,10 @@ int main(void)
 		return -1;
 	}
 	LOG_DBG("st7735 init succeed!");
+
+	ds3231_time_read();
+
+	st7735_screen_write();
 
     return 0;
 }

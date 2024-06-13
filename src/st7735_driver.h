@@ -99,10 +99,21 @@ const uint8_t ST7735_RAMWR_REG_DATA[TFT144_COLUMN_PIXELS_MAX *
 const size_t ST7735_RAMWR_REG_DATA_SIZE = 
         sizeof(ST7735_RAMWR_REG_DATA);
 
-static struct st7735_xx_reg_st {
-    uint8_t reg_address;
-    uint8_t *reg_data;
-    size_t reg_data_size;
+struct st7735_xx_reg_st {
+    const uint8_t reg_address;
+	/*
+	 * 1. const uint8_t *reg_data
+	 *     reg_data = xx_address		// correct
+	 *     *reg_data = xx_value			// error
+	 * 2. uint8_t *const reg_data
+	 *     *reg_data = xx_value			// correct, whatever data is const or not
+	 *     reg_data = xx_address		// error
+	 * 3. const uint8_t *const reg_data
+	 *     reg_data = xx_address		// error
+	 *     *reg_data = xx_value			// error
+	 */
+    const uint8_t *const reg_data;
+    const size_t reg_data_size;
 };
 
 const struct st7735_xx_reg_st ST7735_XX_REG_ST_ARRAY[] = {
@@ -5366,14 +5377,8 @@ const struct st7735_xx_reg_st ST7735_CASET_RASET_REG_ST_ARRAY[] = {
         .reg_data_size = DEFAULT_HOURS_TENS_ROW_DATA_SIZE}
 };
 
-int st7735_init(void);
-static int st7735_xx_reg_init(void);
-static int st7735_xx_reg_write(struct st7735_xx_reg_st *st7735_xx_reg);
-int st7735_screen_write(void);
-int st7735_screen_hours_tens_write(void);
-int st7735_screen_hours_units_write(void);
-int st7735_screen_minutes_tens_write(void);
-int st7735_screen_minutes_units_write(void);
-int st7735_screen_one_position_write(int caset, int raset, int number);
+static int st7735_reg_init(void);
+static int st7735_xx_reg_write(const struct st7735_xx_reg_st st7735_xx_reg);
+static int st7735_screen_one_position_write(int index, int number);
 
 #endif
