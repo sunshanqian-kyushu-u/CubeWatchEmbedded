@@ -12,6 +12,14 @@
 #define DS3231_YEAR_REG_ADDRESS             0x06
 #define DS3231_CONTROL_REG_ADDRESS			0x0E
 
+#define SECONDS_OFFSET                      0
+#define MINUTES_OFFSET                      2
+#define HOURS_OFFSET                        4
+#define DAY_OFFSET                          6
+#define DATE_OFFSET                         9
+#define MONTH_CENTURY_OFFSET                11
+#define YEAR_OFFSET                         15
+
 struct ds3231_reg_value_bcd_st {
     uint8_t seconds;
     uint8_t minutes;
@@ -35,6 +43,9 @@ static struct ds3231_reg_value_dec_st ds3231_reg_value_dec_previous;            
 
 static int ds3231_control_reg_init(void);
 static int ds3231_xx_reg_write(uint8_t *buf, uint32_t length);
+static uint8_t get_s_m_H_M_y(uint8_t *buf, uint8_t offset);
+static uint8_t ascii_2_uint8_num(uint8_t ascii);
+static uint8_t get_day(uint8_t *buf, uint8_t offset);
 static int ds3231_xx_reg_read(uint8_t reg, uint8_t *dst, uint32_t length);
 static void ds3231_bcd_2_dec(void);
 

@@ -25,10 +25,6 @@ int ds3231_init(void) {
         return -1;
     }
 
-    // if(ds3231_time_write(15, 41)) {
-	// 	return -1;
-	// }
-
     if(ds3231_time_read()) {
         return -1;
     }
@@ -79,15 +75,54 @@ static int ds3231_xx_reg_write(uint8_t *buf, uint32_t length) {
  * @retval 0 succeed
  * @retval -1 failed
  */
-int ds3231_time_write(uint8_t hours, uint8_t minutes) {
-    uint8_t temp_buf[4] = {DS3231_SECONDS_REG_ADDRESS};                                             // [0] should be address
-    temp_buf[1] = 0x00;
-    temp_buf[2] = minutes / 10 << 4 | minutes % 10;
-    temp_buf[3] = hours / 10 << 4 | hours % 10;
+int ds3231_time_write(uint8_t *date) {
+    uint8_t temp_buf[8] = {DS3231_SECONDS_REG_ADDRESS};                                             // [0] should be address
+    temp_buf[1] = get_s_m_H_M_y(date, SECONDS_OFFSET);                                              // SECONDS
+    temp_buf[2] = get_s_m_H_M_y(date, MINUTES_OFFSET);                                              // MINUTES
+    temp_buf[3] = get_s_m_H_M_y(date, HOURS_OFFSET);                                                // HOURS
+    temp_buf[4] = get_day(date, DAY_OFFSET);                                                        // DAY
+    temp_buf[5] = get_s_m_H_M_y(date, DATE_OFFSET);                                                 // DATE
+    temp_buf[6] = get_s_m_H_M_y(date, MONTH_CENTURY_OFFSET);                                        // MONTH_CENTURY
+    temp_buf[7] = get_s_m_H_M_y(date, YEAR_OFFSET);                                                 // YEAR
+
+    // for(int i = 0; i < 7; i++) {
+    //     LOG_DBG("ds3231_time_write buf[%d]: 0x%.02x", i + 1, temp_buf[i + 1]);
+    // }
+
     if(ds3231_xx_reg_write(temp_buf, sizeof(temp_buf)) != 0) {
         return -1;
     }
+
     return 0;
+}
+
+static uint8_t get_s_m_H_M_y(uint8_t *buf, uint8_t offset) {
+    uint8_t temp_tens = ascii_2_uint8_num(*(buf + offset));
+    uint8_t temp_units = ascii_2_uint8_num(*(buf + offset + 1));
+    uint8_t temp_output = temp_tens << 4 | temp_units;
+    return temp_output;
+}
+
+static uint8_t ascii_2_uint8_num(uint8_t ascii) {
+    return ascii - 48;
+}
+
+static uint8_t get_day(uint8_t *buf, uint8_t offset) {
+    if(strncmp("Mon", buf + offset, 3) == 0) {
+        return 1;
+    } else if(strncmp("Tue", buf + offset, 3) == 0) {
+        return 2;
+    } else if(strncmp("Wed", buf + offset, 3) == 0) {
+        return 3;
+    } else if(strncmp("Thu", buf + offset, 3) == 0) {
+        return 4;
+    } else if(strncmp("Fri", buf + offset, 3) == 0) {
+        return 5;
+    } else if(strncmp("Sat", buf + offset, 3) == 0) {
+        return 6;
+    } else {
+        return 7;
+    }
 }
 
 /*

@@ -4,7 +4,7 @@
 #include <zephyr/kernel.h>
 
 int ds3231_init(void);
-int ds3231_time_write(uint8_t hours, uint8_t minutes);
+int ds3231_time_write(uint8_t *date);
 int ds3231_time_read(void);
 void ds3231_time_cover(void);
 int ds3231_is_time_changed(void);
@@ -18,5 +18,10 @@ void ds3231_reg_value_dec_previous_print(void);
 
 int st7735_init(void);
 int st7735_screen_write(void);
+
+int nrf52832_init(void);
+
+void write_screen_thread_suspend(void);
+void write_screen_thread_resume(void);
 
 #endif

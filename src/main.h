@@ -7,6 +7,6 @@
 
 #define WRITE_SCREEN_PRIORITY 7
 
-void write_screen_thread(void);
+static void write_screen_thread(void);
 
 #endif
