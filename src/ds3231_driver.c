@@ -58,9 +58,6 @@ static int ds3231_control_reg_init(void) {
  * @retval -1 failed
  */
 static int ds3231_xx_reg_write(uint8_t *buf, uint32_t length) {
-    if(i2c_write_dt(&ds3231_i2c, buf, 1) != 0) {                                                    // write reg
-        return -1;
-    }
     if(i2c_write_dt(&ds3231_i2c, buf, length) != 0) {                                               // write data
         return -1;
     }
@@ -151,12 +148,11 @@ int ds3231_time_read(void) {
  * @retval -1 failed
  */
 static int ds3231_xx_reg_read(uint8_t reg, uint8_t *buf, uint32_t length) {
-    if(i2c_write_dt(&ds3231_i2c, &reg, 1) != 0) {                                                   // write reg
+
+    if(i2c_write_read_dt(&ds3231_i2c, &reg, 1, buf, length)) {
         return -1;
     }
-    if(i2c_read_dt(&ds3231_i2c, buf, length) != 0) {                                                // read data
-        return -1;
-    }
+
     return 0;
 }
 

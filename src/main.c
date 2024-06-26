@@ -35,7 +35,7 @@ void write_screen_thread_resume(void) {
 
 int main(void)
 {
-	if(ds3231_init() != 0) {
+	if(ds3231_init()) {
 		LOG_ERR("ds3231 init failed!");
 		return -1;
 	}
@@ -45,22 +45,44 @@ int main(void)
 		LOG_ERR("time write failed!");
 		return -1;
 	}
-
 	LOG_DBG("ds3231 init succeed!");
 
-	if(st7735_init() != 0) {
+	if(m24m02_init()) {
+		LOG_ERR("m24m02 init failed!");
+		return -1;
+	}
+	LOG_DBG("m24m02 init succeed!");
+
+	if(st7735_init()) {
 		LOG_ERR("st7735 init failed!");
 		return -1;
 	}
 	LOG_DBG("st7735 init succeed!");
 
-	if(nrf52832_init() != 0) {
+	if(nrf52832_init()) {
 		LOG_ERR("nrf52832 init failed!");
 		return -1;
 	}
 
 	ds3231_time_read();
 	st7735_screen_write();
+
+	// uint8_t test_addr_high = 0xFF;
+	// uint8_t test_addr_low = 0x00;
+	// uint8_t test_buf[] = {0x00};
+
+	// if(m24m02x_ma_byte_write(3, test_addr_high, test_addr_low, 0xBB)) {
+	// 	LOG_ERR("m24m02 write error");
+	// 	return -1;
+	// }
+	// LOG_DBG("m24m02 write succeed");
+
+	// if(m24m02x_ma_byte_read(3, test_addr_high, test_addr_low, test_buf)) {
+	// 	LOG_ERR("m24m02 read error");
+	// 	return -1;
+	// }
+	// LOG_DBG("m24m02 read succeed");
+	// LOG_DBG("read data: 0x%.02x", test_buf[0]);
 
     return 0;
 }

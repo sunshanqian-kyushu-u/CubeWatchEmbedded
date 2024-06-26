@@ -24,4 +24,8 @@ int nrf52832_init(void);
 void write_screen_thread_suspend(void);
 void write_screen_thread_resume(void);
 
+int m24m02_init(void);
+int m24m02x_ma_byte_write(uint8_t sector, uint8_t addr_high, uint8_t addr_low, uint8_t data);
+int m24m02x_ma_byte_read(uint8_t sector, uint8_t addr_high, uint8_t addr_low, uint8_t *buf);
+
 #endif

@@ -48,7 +48,7 @@ static ssize_t calibration_time(struct bt_conn *conn, const struct bt_gatt_attr 
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
 	}
 
-	uint8_t temp_date[len];
+	uint8_t temp_date[17];
 
 	memcpy(temp_date, buf, len);
 

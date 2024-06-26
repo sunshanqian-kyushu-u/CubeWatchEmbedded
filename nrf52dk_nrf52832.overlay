@@ -79,6 +79,36 @@
         reg = < 0x68 >;
         status = "okay";
     };
+
+    m24m02a: m24m02a@50{                                                                            // A17 A16 = 0 0
+        compatible = "i2c-device";
+        reg = < 0x50 >;
+        status = "okay";
+    };
+
+    m24m02b: m24m02b@51{                                                                            // A17 A16 = 0 1
+        compatible = "i2c-device";
+        reg = < 0x51 >;
+        status = "okay";
+    };
+
+    m24m02c: m24m02c@52{                                                                            // A17 A16 = 1 0
+        compatible = "i2c-device";
+        reg = < 0x52 >;
+        status = "okay";
+    };
+
+    m24m02d: m24m02d@53{                                                                            // A17 A16 = 1 1
+        compatible = "i2c-device";
+        reg = < 0x53 >;
+        status = "okay";
+    };
+
+    m24m02e: m24m02e@58{
+        compatible = "i2c-device";
+        reg = < 0x58 >;
+        status = "okay";
+    };
 };
 
 &spi1 {
@@ -87,12 +117,12 @@
     pinctrl-0 = <&spi1_default>;
     pinctrl-1 = <&spi1_sleep>;
     pinctrl-names = "default", "sleep";
-    cs-gpios = <&gpio0 18 GPIO_ACTIVE_LOW>,     // cs
-               <&gpio0 17 GPIO_ACTIVE_LOW>,     // 0: cmd mode, 1: data mode
-               <&gpio0 16 GPIO_ACTIVE_HIGH>;    // bk
+    cs-gpios = <&gpio0 18 GPIO_ACTIVE_LOW>,                                                         // cs
+               <&gpio0 17 GPIO_ACTIVE_LOW>,                                                         // 0: cmd mode, 1: data mode
+               <&gpio0 16 GPIO_ACTIVE_HIGH>;                                                        // bk
 
-    st7735: st7735@0 {                          // width: 130, height: 131
-        compatible = "bosch,bme280";            // use this as a common spi device
+    st7735: st7735@0 {                                                                              // width: 130, height: 131
+        compatible = "bosch,bme280";                                                                // use this as a common spi device
 		reg = <0x0>;
         spi-max-frequency = <8000000>;
 	};
