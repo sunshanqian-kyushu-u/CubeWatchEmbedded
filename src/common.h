@@ -25,7 +25,9 @@ void write_screen_thread_suspend(void);
 void write_screen_thread_resume(void);
 
 int m24m02_init(void);
-int m24m02x_ma_byte_write(uint8_t sector, uint8_t addr_high, uint8_t addr_low, uint8_t data);
-int m24m02x_ma_byte_read(uint8_t sector, uint8_t addr_high, uint8_t addr_low, uint8_t *buf);
+int m24m02_write(uint8_t sector, uint8_t addr_high, uint8_t addr_low, uint8_t *buf, uint8_t length);
+int m24m02_read(uint8_t sector, uint8_t addr_high, uint8_t addr_low, uint8_t *buf, uint8_t length);
+
+void qoi_init(void);
 
 #endif

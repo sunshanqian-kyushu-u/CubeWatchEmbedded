@@ -119,7 +119,7 @@
     pinctrl-names = "default", "sleep";
     cs-gpios = <&gpio0 18 GPIO_ACTIVE_LOW>,                                                         // cs
                <&gpio0 17 GPIO_ACTIVE_LOW>,                                                         // 0: cmd mode, 1: data mode
-               <&gpio0 16 GPIO_ACTIVE_HIGH>;                                                        // bk
+               <&gpio0 16 GPIO_ACTIVE_HIGH>;                                                        // bl
 
     st7735: st7735@0 {                                                                              // width: 130, height: 131
         compatible = "bosch,bme280";                                                                // use this as a common spi device

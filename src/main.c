@@ -5,7 +5,7 @@
 
 #include <zephyr/logging/log.h>
 
-LOG_MODULE_REGISTER(main, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(main, LOG_LEVEL_ERR);
 
 static void write_screen_thread(void) {
 	while(1) {
@@ -40,12 +40,12 @@ int main(void)
 		return -1;
 	}
 
-	uint8_t date_str[17] = "452416Tue25062024";
-	if(ds3231_time_write(date_str)) {
-		LOG_ERR("time write failed!");
-		return -1;
-	}
-	LOG_DBG("ds3231 init succeed!");
+	// uint8_t date_str[17] = "452416Tue25062024";
+	// if(ds3231_time_write(date_str)) {
+	// 	LOG_ERR("time write failed!");
+	// 	return -1;
+	// }
+	// LOG_DBG("ds3231 init succeed!");
 
 	if(m24m02_init()) {
 		LOG_ERR("m24m02 init failed!");
@@ -67,22 +67,7 @@ int main(void)
 	ds3231_time_read();
 	st7735_screen_write();
 
-	// uint8_t test_addr_high = 0xFF;
-	// uint8_t test_addr_low = 0x00;
-	// uint8_t test_buf[] = {0x00};
-
-	// if(m24m02x_ma_byte_write(3, test_addr_high, test_addr_low, 0xBB)) {
-	// 	LOG_ERR("m24m02 write error");
-	// 	return -1;
-	// }
-	// LOG_DBG("m24m02 write succeed");
-
-	// if(m24m02x_ma_byte_read(3, test_addr_high, test_addr_low, test_buf)) {
-	// 	LOG_ERR("m24m02 read error");
-	// 	return -1;
-	// }
-	// LOG_DBG("m24m02 read succeed");
-	// LOG_DBG("read data: 0x%.02x", test_buf[0]);
+	qoi_init();
 
     return 0;
 }
