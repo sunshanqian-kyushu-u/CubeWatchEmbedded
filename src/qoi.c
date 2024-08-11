@@ -234,61 +234,169 @@ LOG_MODULE_REGISTER(qoi, LOG_LEVEL_DBG);
  * @brief qoi test func
  */
 void qoi_init(void) {
-    m24m02_write(0, 0x00, 0x00, raw_data, sizeof(raw_data));
+    // m24m02_write(0, 0xF9, 0x30, raw_data, sizeof(raw_data));
 
-    uint8_t temp_buf[100];
+    // m24m02_read(0, 0xF9, 0x30, receive_data, sizeof(raw_data));
 
-    m24m02_read(0, 0x00, 0x00, temp_buf, 60);
-
-    int count = 0;
-
-    for (int i = 0; i < 60; i++) {
-        printk("0x%.02x ", temp_buf[i]);
-        count++;
-        k_msleep(10);
-        if (count % 8 == 0) {
-            printk("\r\n");
-        }
-    }
-    
-	// int ret = qoi_encode(&test_raw_image, test_qoi_image_data);
-    // if (ret == -1) {
-    //     LOG_ERR("qoi error!");
+    // int temp_cmp = memcmp(raw_data, receive_data, sizeof(raw_data));
+    // if (temp_cmp == 0) {
+    //     LOG_DBG("read data == write data");
     // } else {
-    //     LOG_DBG("qoi succeed! return %d.", ret);
+    //     LOG_DBG("read data != write data");
+    // }
+
+    // m24m02e_write(0x00, raw_data, 256);
+
+    // m24m02e_read(0x00, received_data, 256);
+
+    // int temp_cmp = memcmp(raw_data, received_data, 256);
+    // if (temp_cmp == 0) {
+    //     LOG_DBG("read data == write data");
+    // } else {
+    //     LOG_DBG("read data != write data");
+    // }
+
+    // size_t encode_length = qoi_encode(raw_data, qoi_cal_data, sizeof(raw_data));
+    // LOG_DBG("encode to %d byte.", encode_length);
+
+    // for (int i = 0; i < 220; i++) {
+    //     if (i % 10 == 0) {
+    //         printk("\r\n");
+    //     }
+    //     printk("0x%.02x ", qoi_cal_data[i]);
+    //     k_msleep(10);
+    // }
+    // printk("\r\n");
+
+    // size_t decode_length = qoi_decode(qoi_cal_data, raw_cal_data, encode_length);
+    // LOG_DBG("decode to %d byte.", decode_length);
+
+    // for (int i = 0; i < 320; i++) {
+    //     if (i % 10 == 0) {
+    //         printk("\r\n");
+    //     }
+    //     printk("0x%.02x ", raw_cal_data[i]);
+    //     k_msleep(10);
+    // }
+    // printk("\r\n");
+
+    // int temp_cmp = memcmp(raw_data, raw_cal_data, sizeof(raw_data));
+    // if (temp_cmp == 0) {
+    //     LOG_DBG("raw data == raw cal data");
+    // } else {
+    //     LOG_DBG("raw data != raw cal data");
     // }
 }
 
 /*
  * @brief QOI encode func
  *
- * @param raw_image struct raw_image_st
- * @param des_buff copy destination
+ * @param raw_buf data to be encoded
+ * @param qoi_buf buffer to store encoded data
+ * @param length raw data length
  *
- * @retval -1 failed
- * @retval qoi effective length
+ * @retval qoi data length
+ * 
+ * @warning overflow may occurs
  */
-// static int qoi_encode(struct image_st *raw_image, uint8_t *des_buff) {
-//     struct image_header_st image_header = {
-//         .magic = "qoi", 
-//         .width = raw_image->image_header.width, 
-//         .height = raw_image->image_header.height, 
-//         .channels = 9
-//     };
+static size_t qoi_encode(uint8_t *raw_buf, uint8_t *qoi_buf, size_t length) {
+    size_t raw_buf_shift = 0;
+    size_t qoi_buf_shift = 0;
+    size_t count_0x00 = 0;
+    bool flag_0x00 = false;
+    while (1) {
+        if (raw_buf_shift + 1 > length) {
+            if (flag_0x00 == true) {                                                                // should write final 0x00 sequence into qoi_buf
+                uint8_t count_255 = count_0x00 / 255;
+                uint8_t remain = count_0x00 % 255;
+                for (uint8_t i = 0; i < count_255; i++) {
+                    *(qoi_buf + qoi_buf_shift) = 0x00;
+                    qoi_buf_shift++;
+                    *(qoi_buf + qoi_buf_shift) = 0xFF;
+                    qoi_buf_shift++;
+                }
+                if (remain != 0) {
+                    *(qoi_buf + qoi_buf_shift) = 0x00;
+                    qoi_buf_shift++;
+                    *(qoi_buf + qoi_buf_shift) = remain;
+                    qoi_buf_shift++;
+                }
+                count_0x00 = 0;
+                flag_0x00 = false;
 
-//     switch (raw_image->image_header.channels) {
-//         case 8:
-            
-//             break;
-//         default:
-//             return -1;
-//     }
-// }
+                return qoi_buf_shift;
+            } else {
+                return qoi_buf_shift;
+            }
+        }
+
+        if (*(raw_buf + raw_buf_shift) != 0x00 && flag_0x00 == false) {                             // meet !0x00 and no 0x00 before
+            *(qoi_buf + qoi_buf_shift) = *(raw_buf + raw_buf_shift);
+            raw_buf_shift++;
+            qoi_buf_shift++;
+        } else if (*(raw_buf + raw_buf_shift) != 0x00 && flag_0x00 == true) {                       // meet !0x00 and settlement 0x00 before
+            uint8_t count_255 = count_0x00 / 255;
+            uint8_t remain = count_0x00 % 255;
+            for (uint8_t i = 0; i < count_255; i++) {
+                *(qoi_buf + qoi_buf_shift) = 0x00;
+                qoi_buf_shift++;
+                *(qoi_buf + qoi_buf_shift) = 0xFF;
+                qoi_buf_shift++;
+            }
+            if (remain != 0) {
+                *(qoi_buf + qoi_buf_shift) = 0x00;
+                qoi_buf_shift++;
+                *(qoi_buf + qoi_buf_shift) = remain;
+                qoi_buf_shift++;
+            }
+            count_0x00 = 0;
+            flag_0x00 = false;
+            *(qoi_buf + qoi_buf_shift) = *(raw_buf + raw_buf_shift);
+            raw_buf_shift++;
+            qoi_buf_shift++;
+        } else {                                                                                    // meet 0x00
+            count_0x00++;
+            flag_0x00 = true;
+            raw_buf_shift++;
+        }
+    }
+}
 
 /*
- * @brief QOI encode func
+ * @brief QOI decode func
  *
- * @param
- * @retval -1 failed
- * @retval qoi buff length
+ * @param qoi_buf data to be decoded
+ * @param raw_buf buffer to store decoded data
+ * @param length raw data length
+ *
+ * @retval qoi data length
  */
+static size_t qoi_decode(uint8_t *qoi_buf, uint8_t *raw_buf, size_t length) {
+    size_t qoi_buf_shift = 0;
+    size_t raw_buf_shift = 0;
+    while (1) {
+        if (qoi_buf_shift + 1> length) {
+            return raw_buf_shift;
+        }
+        if (*(qoi_buf + qoi_buf_shift) != 0x00) {
+            *(raw_buf + raw_buf_shift) = *(qoi_buf + qoi_buf_shift);
+            qoi_buf_shift++;
+            raw_buf_shift++;
+        } else {
+            for (int i = 0; i < *(qoi_buf + qoi_buf_shift + 1); i++) {
+                *(raw_buf + raw_buf_shift) = 0x00;
+                raw_buf_shift++;
+            }
+            qoi_buf_shift += 2;
+        }
+    }
+}
+
+/*
+ * @brief 
+ *
+ * @param 
+ *
+ * @retval
+ */
+

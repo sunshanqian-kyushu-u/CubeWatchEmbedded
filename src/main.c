@@ -40,12 +40,12 @@ int main(void)
 		return -1;
 	}
 
-	// uint8_t date_str[17] = "452416Tue25062024";
-	// if(ds3231_time_write(date_str)) {
-	// 	LOG_ERR("time write failed!");
-	// 	return -1;
-	// }
-	// LOG_DBG("ds3231 init succeed!");
+	uint8_t date_str[17] = "452416Tue25062024";
+	if(ds3231_time_write(date_str)) {
+		LOG_ERR("time write failed!");
+		return -1;
+	}
+	LOG_DBG("ds3231 init succeed!");
 
 	if(m24m02_init()) {
 		LOG_ERR("m24m02 init failed!");
@@ -64,10 +64,16 @@ int main(void)
 		return -1;
 	}
 
+	if (led_init()) {
+		LOG_ERR("led init failed!");
+		return -1;
+	}
+
 	ds3231_time_read();
 	st7735_screen_write();
 
 	qoi_init();
+	led_on();
 
     return 0;
 }

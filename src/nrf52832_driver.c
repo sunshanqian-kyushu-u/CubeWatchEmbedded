@@ -10,7 +10,7 @@
 #include <zephyr/bluetooth/uuid.h>
 #include <zephyr/bluetooth/gatt.h>
 
-LOG_MODULE_REGISTER(nrf52832, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(nrf52, LOG_LEVEL_DBG);
 
 static struct bt_le_adv_param *adv_param = BT_LE_ADV_PARAM(
 	    (BT_LE_ADV_OPT_CONNECTABLE |
@@ -33,35 +33,32 @@ static const struct bt_data sd[] = {
     BT_DATA_BYTES(BT_DATA_UUID128_ALL, CW_ADS_BT_UUID_VAL), 
 };
 
-static ssize_t calibration_time(struct bt_conn *conn, const struct bt_gatt_attr *attr, 
+static int receive_data(const void *buf, uint16_t len) {
+	if (len == 17U) {
+		uint8_t temp_date[17];
+
+		memcpy(temp_date, buf, len);
+
+		if(ds3231_time_write(temp_date)) {
+			return -1;
+		} else {
+			ds3231_time_read();
+			st7735_screen_write();
+			return 0;
+		}
+	}
+}
+
+static ssize_t calibrate_time(struct bt_conn *conn, const struct bt_gatt_attr *attr, 
 		const void *buf, uint16_t len, uint16_t offset, uint8_t flags) {
 
-	LOG_DBG("Attribute write, handle: %u, conn: %p", attr->handle, (void *)conn);
+	receive_data(buf, len);
 
-	if (len != 17U) {
-		LOG_ERR("incorrect data length");
-		return BT_GATT_ERR(BT_ATT_ERR_INVALID_ATTRIBUTE_LEN);
-	}
+	return len;
+}
 
-	if (offset != 0) {
-		LOG_DBG("incorrect data offset");
-		return BT_GATT_ERR(BT_ATT_ERR_INVALID_OFFSET);
-	}
-
-	uint8_t temp_date[17];
-
-	memcpy(temp_date, buf, len);
-
-	// for(int i = 0; i < len; i++) {
-	// 	LOG_DBG("buffer[%d]: 0x%.02x", i, temp_date[i]);
-	// }
-
-	if(ds3231_time_write(temp_date)) {
-		return -1;
-	}
-
-	ds3231_time_read();
-	st7735_screen_write();
+static ssize_t customize_font(struct bt_conn *conn, const struct bt_gatt_attr *attr, 
+		const void *buf, uint16_t len, uint16_t offset, uint8_t flags) {
 
 	return len;
 }
@@ -75,9 +72,16 @@ BT_GATT_SERVICE_DEFINE(cube_watch_sevice,
 				BT_GATT_CHRC_WRITE,
 				BT_GATT_PERM_WRITE, 
 				NULL, 
-				calibration_time, 
+				calibrate_time, 
 				NULL),
-		);
+		BT_GATT_PRIMARY_SERVICE(CW_FCS_BT_UUID),
+		BT_GATT_CHARACTERISTIC(CW_FCC_BT_UUID, 
+				BT_GATT_CHRC_WRITE,
+				BT_GATT_PERM_WRITE, 
+				NULL, 
+				customize_font, 
+				NULL),
+);
 
 /*
  * @brief if connected

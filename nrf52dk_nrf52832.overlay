@@ -127,3 +127,11 @@
         spi-max-frequency = <8000000>;
 	};
 };
+
+/ {
+    leds {
+        led0: led_0 {
+			gpios = <&gpio0 29 GPIO_ACTIVE_LOW>;
+		};
+    };
+};
