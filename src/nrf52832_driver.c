@@ -39,11 +39,11 @@ static int receive_data(const void *buf, uint16_t len) {
 
 		memcpy(temp_date, buf, len);
 
-		if(ds3231_time_write(temp_date)) {
+		if(ds3231_time_write(0x50, 0x49, 0x15, 0x06, 0x02, 0x04, 0x24)) {
 			return -1;
 		} else {
 			ds3231_time_read();
-			st7735_screen_write();
+			// st7735_screen_write();
 			return 0;
 		}
 	}
@@ -101,7 +101,7 @@ static void on_connected(struct bt_conn *conn, uint8_t err) {
 static void on_disconnected(struct bt_conn *conn, uint8_t reason) {
 	LOG_DBG("Disconnected (reason %u)", reason);
 	ds3231_time_read();
-	st7735_screen_write();
+	// st7735_screen_write();
     write_screen_thread_resume();
 }
 

@@ -23,7 +23,7 @@
 //     status = "disabled";
 // };
 
-//disable spi1
+// disable spi1
 // &spi1 {
 //     status = "disabled";
 // };

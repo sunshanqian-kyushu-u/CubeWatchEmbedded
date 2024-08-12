@@ -40,28 +40,22 @@ int ds3231_init(void) {
  * @retval -1 failed
  */
 static int ds3231_control_reg_init(void) {
-    uint8_t temp_buf[] = {DS3231_CONTROL_REG_ADDRESS, 0x1C};
-    if(ds3231_xx_reg_write(temp_buf, sizeof(temp_buf)) != 0) {
-        return -1;
-    }
-    return 0;
+    ds3231_tx_buf[0] = DS3231_CONTROL_REG_ADDRESS;
+    ds3231_tx_buf[1] = 0x1C;
+
+    return ds3231_write(2);
 }
 
 /*
  * @brief write reg(s) value
  *
- * @param reg register address
- * @param buf data buffer will be written into register(s)
  * @param length length to write
  * 
  * @retval 0 succeed
  * @retval -1 failed
  */
-static int ds3231_xx_reg_write(uint8_t *buf, uint32_t length) {
-    if(i2c_write_dt(&ds3231_i2c, buf, length) != 0) {                                               // write data
-        return -1;
-    }
-    return 0;
+static int ds3231_write(size_t length) {
+    return i2c_write_dt(&ds3231_i2c, ds3231_tx_buf, length);
 }
 
 /*
@@ -72,119 +66,63 @@ static int ds3231_xx_reg_write(uint8_t *buf, uint32_t length) {
  * @retval 0 succeed
  * @retval -1 failed
  */
-int ds3231_time_write(uint8_t *date) {
-    uint8_t temp_buf[8] = {DS3231_SECONDS_REG_ADDRESS};                                             // [0] should be address
-    temp_buf[1] = get_s_m_H_M_y(date, SECONDS_OFFSET);                                              // SECONDS
-    temp_buf[2] = get_s_m_H_M_y(date, MINUTES_OFFSET);                                              // MINUTES
-    temp_buf[3] = get_s_m_H_M_y(date, HOURS_OFFSET);                                                // HOURS
-    temp_buf[4] = get_day(date, DAY_OFFSET);                                                        // DAY
-    temp_buf[5] = get_s_m_H_M_y(date, DATE_OFFSET);                                                 // DATE
-    temp_buf[6] = get_s_m_H_M_y(date, MONTH_CENTURY_OFFSET);                                        // MONTH_CENTURY
-    temp_buf[7] = get_s_m_H_M_y(date, YEAR_OFFSET);                                                 // YEAR
+int ds3231_time_write(uint8_t seconds, uint8_t minutes, uint8_t hours, 
+        uint8_t day, uint8_t date, uint8_t month_century, uint8_t year) {
+    ds3231_tx_buf[0] = DS3231_SECONDS_REG_ADDRESS;
+    ds3231_tx_buf[1] = seconds;                                                                     // SECONDS
+    ds3231_tx_buf[2] = minutes;                                                                     // MINUTES
+    ds3231_tx_buf[3] = hours;                                                                       // HOURS
+    ds3231_tx_buf[4] = day;                                                                         // DAY
+    ds3231_tx_buf[5] = date;                                                                        // DATE
+    ds3231_tx_buf[6] = month_century;                                                               // MONTH_CENTURY
+    ds3231_tx_buf[7] = year;                                                                        // YEAR
 
-    // for(int i = 0; i < 7; i++) {
-    //     LOG_DBG("ds3231_time_write buf[%d]: 0x%.02x", i + 1, temp_buf[i + 1]);
-    // }
-
-    if(ds3231_xx_reg_write(temp_buf, sizeof(temp_buf)) != 0) {
-        return -1;
-    }
-
-    return 0;
-}
-
-static uint8_t get_s_m_H_M_y(uint8_t *buf, uint8_t offset) {
-    uint8_t temp_tens = ascii_2_uint8_num(*(buf + offset));
-    uint8_t temp_units = ascii_2_uint8_num(*(buf + offset + 1));
-    uint8_t temp_output = temp_tens << 4 | temp_units;
-    return temp_output;
-}
-
-static uint8_t ascii_2_uint8_num(uint8_t ascii) {
-    return ascii - 48;
-}
-
-static uint8_t get_day(uint8_t *buf, uint8_t offset) {
-    if(strncmp("Mon", buf + offset, 3) == 0) {
-        return 1;
-    } else if(strncmp("Tue", buf + offset, 3) == 0) {
-        return 2;
-    } else if(strncmp("Wed", buf + offset, 3) == 0) {
-        return 3;
-    } else if(strncmp("Thu", buf + offset, 3) == 0) {
-        return 4;
-    } else if(strncmp("Fri", buf + offset, 3) == 0) {
-        return 5;
-    } else if(strncmp("Sat", buf + offset, 3) == 0) {
-        return 6;
-    } else {
-        return 7;
-    }
+    return ds3231_write(8);
 }
 
 /*
- * @brief read time
+ * @brief read from reg(s)
  *
  * @retval 0 succeed
  * @retval -1 failed
  */
 int ds3231_time_read(void) {
-    if(ds3231_xx_reg_read(DS3231_SECONDS_REG_ADDRESS, 
-            &ds3231_reg_value_bcd.seconds, sizeof(ds3231_reg_value_bcd)) != 0) {
+    if (i2c_write_read_dt(&ds3231_i2c, ds3231_rx_addr, 1, &ds3231_bcd_time_curr, 7)) {
         return -1;
     }
-    ds3231_bcd_2_dec();
+    ds3231_time_bcd_2_dec();
     return 0;
-}
-
-/*
- * @brief read reg(s) value
- *
- * @param reg register address
- * @param buf target buffer
- * @param length length to read
- * 
- * @retval 0 succeed
- * @retval -1 failed
- */
-static int ds3231_xx_reg_read(uint8_t reg, uint8_t *buf, uint32_t length) {
-
-    if(i2c_write_read_dt(&ds3231_i2c, &reg, 1, buf, length)) {
-        return -1;
-    }
-
-    return 0;
-}
-
-/*
- * @brief bcd data to dec data
- */
-static void ds3231_bcd_2_dec(void) {
-    ds3231_reg_value_dec.minutes_units = ds3231_reg_value_bcd.minutes & 0x0F;
-	ds3231_reg_value_dec.minutes_tens = ds3231_reg_value_bcd.minutes >> 4;
-    if(ds3231_reg_value_bcd.hours & 0x40) {                                                         // 12h mode
-        uint8_t temp_hours_bcd = ds3231_reg_value_bcd.hours & 0x1F;
-        uint8_t temp_hours_dec = 10 * (temp_hours_bcd >> 4) + 
-                (temp_hours_bcd & 0x0F);
-        if(ds3231_reg_value_bcd.hours & 0x20) {                                                     // PM
-            ds3231_reg_value_dec.hours_units = (temp_hours_dec + 12) % 10;
-            ds3231_reg_value_dec.hours_tens = (temp_hours_dec + 12) / 10;
-        } else {                                                                                    // AM
-            ds3231_reg_value_dec.hours_units = temp_hours_dec % 10;
-            ds3231_reg_value_dec.hours_tens = temp_hours_dec / 10;
-        }
-    } else {                                                                                        // 24h mode
-        ds3231_reg_value_dec.hours_units = ds3231_reg_value_bcd.hours & 0x0F;
-        ds3231_reg_value_dec.hours_tens = ds3231_reg_value_bcd.hours >> 4;
-    }
 }
 
 /*
  * @brief cover latest time to previous time
  */
 void ds3231_time_cover(void) {
-    memcpy(&ds3231_reg_value_dec_previous, &ds3231_reg_value_dec, 
-            sizeof(struct ds3231_reg_value_dec_st));
+    memcpy(&ds3231_bcd_time_prev, &ds3231_bcd_time_curr, sizeof(struct ds3231_time_st));
+}
+
+/*
+ * @brief bcd data to dec data
+ */
+static void ds3231_time_bcd_2_dec(void) {
+    ds3231_dec_time_curr.seconds = ds3231_bcd_2_dec(ds3231_bcd_time_curr.seconds);
+    ds3231_dec_time_curr.minutes = ds3231_bcd_2_dec(ds3231_bcd_time_curr.minutes);
+    ds3231_dec_time_curr.hours = ds3231_bcd_2_dec(ds3231_bcd_time_curr.hours);
+    ds3231_dec_time_curr.day = ds3231_bcd_2_dec(ds3231_bcd_time_curr.day);
+    ds3231_dec_time_curr.date = ds3231_bcd_2_dec(ds3231_bcd_time_curr.date);
+    ds3231_dec_time_curr.month_century = ds3231_bcd_2_dec(ds3231_bcd_time_curr.month_century);
+    ds3231_dec_time_curr.year = ds3231_bcd_2_dec(ds3231_bcd_time_curr.year);
+}
+
+/*
+ * @brief bcd data to dec data
+ */
+static uint8_t ds3231_bcd_2_dec(uint8_t bcd) {
+
+    uint8_t temp_tens = bcd >> 4;
+    uint8_t temp_units = bcd & 0x0F;
+
+    return temp_tens * 10 + temp_units;
 }
 
 /*
@@ -194,70 +132,68 @@ void ds3231_time_cover(void) {
  * @retval others changed
  */
 int ds3231_is_time_changed(void) {
-    return memcmp(&ds3231_reg_value_dec_previous, &ds3231_reg_value_dec, 
-            sizeof(struct ds3231_reg_value_dec_st));
+    return memcmp(&ds3231_bcd_time_curr + DS3231_MINUTES_REG_ADDRESS, 
+            &ds3231_bcd_time_prev + DS3231_MINUTES_REG_ADDRESS, DS3231_YEAR_REG_ADDRESS);
 }
 
 /*
- * @brief get minutes_units in struct ds3231_reg_value_dec
+ * @brief get minutes units
  *
- * @return uint8_t minutes_units
+ * @return uint8_t minutes units
  */
-uint8_t get_ds3231_reg_value_dec_minutes_units(void) {
-    return ds3231_reg_value_dec.minutes_units;
+uint8_t ds3231_get_time_minutes_units(void) {
+    return ds3231_dec_time_curr.minutes % 10;
 }
 
 /*
- * @brief get minutes_tens in struct ds3231_reg_value_dec
+ * @brief get minutes tens
  *
- * @return uint8_t minutes_tens
+ * @return uint8_t minutes tens
  */
-uint8_t get_ds3231_reg_value_dec_minutes_tens(void) {
-    return ds3231_reg_value_dec.minutes_tens;
+uint8_t ds3231_get_time_minutes_tens(void) {
+    return ds3231_dec_time_curr.minutes / 10;
 }
 
 /*
- * @brief get hours_units in struct ds3231_reg_value_dec
+ * @brief get hours units
  *
- * @return uint8_t hours_units
+ * @return uint8_t hours units
  */
-uint8_t get_ds3231_reg_value_dec_hours_units(void) {
-    return ds3231_reg_value_dec.hours_units;
+uint8_t ds3231_get_time_hours_units(void) {
+    return ds3231_dec_time_curr.hours % 10;
 }
 
 /*
- * @brief get hours_tens in struct ds3231_reg_value_dec
+ * @brief get hours tens
  *
- * @return uint8_t hours_tens
+ * @return uint8_t hours tens
  */
-uint8_t get_ds3231_reg_value_dec_hours_tens(void) {
-    return ds3231_reg_value_dec.hours_tens;
+uint8_t ds3231_get_time_hours_tens(void) {
+    return ds3231_dec_time_curr.hours / 10;
 }
 
 /*
- * @brief print ds3231_reg_value_bcd
+ * @brief print bcd current time
  */
-void ds3231_reg_value_bcd_print(void) {
-    LOG_DBG("minutes reg is: 0x%.02x", ds3231_reg_value_bcd.minutes);
-	LOG_DBG("hours reg is: 0x%.02x", ds3231_reg_value_bcd.hours);
+void ds3231_bcd_time_curr_print(void) {
+    LOG_DBG("bcd time current [seconds] is: 0x%.02x", ds3231_bcd_time_curr.seconds);
+	LOG_DBG("bcd time current [minutes] is: 0x%.02x", ds3231_bcd_time_curr.minutes);
+    LOG_DBG("bcd time current [hours] is: 0x%.02x", ds3231_bcd_time_curr.hours);
+    LOG_DBG("bcd time current [day] is: 0x%.02x", ds3231_bcd_time_curr.day);
+    LOG_DBG("bcd time current [date] is: 0x%.02x", ds3231_bcd_time_curr.date);
+    LOG_DBG("bcd time current [month_century] is: 0x%.02x", ds3231_bcd_time_curr.month_century);
+    LOG_DBG("bcd time current [year] is: 0x%.02x", ds3231_bcd_time_curr.year);
 }
 
 /*
- * @brief print ds3231_reg_value_dec
+ * @brief print dec current time
  */
-void ds3231_reg_value_dec_print(void) {
-    LOG_DBG("minutes units: %d", ds3231_reg_value_dec.minutes_units);
-	LOG_DBG("minutes tens: %d", ds3231_reg_value_dec.minutes_tens);
-	LOG_DBG("hours units: %d", ds3231_reg_value_dec.hours_units);
-	LOG_DBG("hours tens: %d", ds3231_reg_value_dec.hours_tens);
-}
-
-/*
- * @brief print ds3231_reg_value_bcd
- */
-void ds3231_reg_value_dec_previous_print(void) {
-    LOG_DBG("minutes units: %d", ds3231_reg_value_dec_previous.minutes_units);
-	LOG_DBG("minutes tens: %d", ds3231_reg_value_dec_previous.minutes_tens);
-	LOG_DBG("hours units: %d", ds3231_reg_value_dec_previous.hours_units);
-	LOG_DBG("hours tens: %d", ds3231_reg_value_dec_previous.hours_tens);
+void ds3231_dec_time_curr_print(void) {
+    LOG_DBG("dec time current [seconds] is: %d", ds3231_dec_time_curr.seconds);
+	LOG_DBG("dec time current [minutes] is: %d", ds3231_dec_time_curr.minutes);
+    LOG_DBG("dec time current [hours] is: %d", ds3231_dec_time_curr.hours);
+    LOG_DBG("dec time current [day] is: %d", ds3231_dec_time_curr.day);
+    LOG_DBG("dec time current [date] is: %d", ds3231_dec_time_curr.date);
+    LOG_DBG("dec time current [month_century] is: %d", ds3231_dec_time_curr.month_century);
+    LOG_DBG("dec time current [year] is: %d", ds3231_dec_time_curr.year);
 }

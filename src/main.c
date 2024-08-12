@@ -13,9 +13,11 @@ static void write_screen_thread(void) {
 		ds3231_time_read();
 
 		if(ds3231_is_time_changed()) {
+
 			ds3231_time_cover();
+
 			// display
-			st7735_screen_write();
+			// st7735_screen_write();
 		}
 		LOG_DBG("running...");
 		k_msleep(1000);
@@ -40,8 +42,7 @@ int main(void)
 		return -1;
 	}
 
-	uint8_t date_str[17] = "452416Tue25062024";
-	if(ds3231_time_write(date_str)) {
+	if(ds3231_time_write(0x50, 0x49, 0x15, 0x06, 0x02, 0x04, 0x24)) {
 		LOG_ERR("time write failed!");
 		return -1;
 	}
@@ -70,10 +71,18 @@ int main(void)
 	}
 
 	ds3231_time_read();
-	st7735_screen_write();
+	// st7735_screen_write();
 
 	qoi_init();
 	led_on();
+
+	// uint8_t *buf;
+	// buf = k_malloc(5);
+	// if (buf) {
+	// 	LOG_ERR("malloc have enough space");
+	// } else {
+	// 	LOG_ERR("malloc no enough space");
+	// }
 
     return 0;
 }

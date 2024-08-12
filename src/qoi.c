@@ -234,58 +234,7 @@ LOG_MODULE_REGISTER(qoi, LOG_LEVEL_DBG);
  * @brief qoi test func
  */
 void qoi_init(void) {
-    // m24m02_write(0, 0xF9, 0x30, raw_data, sizeof(raw_data));
-
-    // m24m02_read(0, 0xF9, 0x30, receive_data, sizeof(raw_data));
-
-    // int temp_cmp = memcmp(raw_data, receive_data, sizeof(raw_data));
-    // if (temp_cmp == 0) {
-    //     LOG_DBG("read data == write data");
-    // } else {
-    //     LOG_DBG("read data != write data");
-    // }
-
-    // m24m02e_write(0x00, raw_data, 256);
-
-    // m24m02e_read(0x00, received_data, 256);
-
-    // int temp_cmp = memcmp(raw_data, received_data, 256);
-    // if (temp_cmp == 0) {
-    //     LOG_DBG("read data == write data");
-    // } else {
-    //     LOG_DBG("read data != write data");
-    // }
-
-    // size_t encode_length = qoi_encode(raw_data, qoi_cal_data, sizeof(raw_data));
-    // LOG_DBG("encode to %d byte.", encode_length);
-
-    // for (int i = 0; i < 220; i++) {
-    //     if (i % 10 == 0) {
-    //         printk("\r\n");
-    //     }
-    //     printk("0x%.02x ", qoi_cal_data[i]);
-    //     k_msleep(10);
-    // }
-    // printk("\r\n");
-
-    // size_t decode_length = qoi_decode(qoi_cal_data, raw_cal_data, encode_length);
-    // LOG_DBG("decode to %d byte.", decode_length);
-
-    // for (int i = 0; i < 320; i++) {
-    //     if (i % 10 == 0) {
-    //         printk("\r\n");
-    //     }
-    //     printk("0x%.02x ", raw_cal_data[i]);
-    //     k_msleep(10);
-    // }
-    // printk("\r\n");
-
-    // int temp_cmp = memcmp(raw_data, raw_cal_data, sizeof(raw_data));
-    // if (temp_cmp == 0) {
-    //     LOG_DBG("raw data == raw cal data");
-    // } else {
-    //     LOG_DBG("raw data != raw cal data");
-    // }
+    
 }
 
 /*
